@@ -16,7 +16,7 @@ public class CubeController : MonoBehaviour
 {
     private Rigidbody rigidBody;
 
-    public int springConstant; // N/m
+    // private int constantForce;
 
     private float currentTimeStep; // s
     
@@ -37,14 +37,18 @@ public class CubeController : MonoBehaviour
 
     // FixedUpdate can be called multiple times per frame
     void FixedUpdate() {
-        float forceZ; // N
+        float forceX; // N
 
         // Calculate spring force on body for x component of force vector
-        forceZ = -rigidBody.position.z * springConstant;
-        rigidBody.AddForce(new Vector3(0f, 0f, forceZ));
+        // forceX = -rigidBody.position.x * constantForce;
+        // rigidBody.AddForce(new Vector3(forceX, 0f, 0f));
 
         currentTimeStep += Time.deltaTime;
-        timeSeries.Add(new List<float>() {currentTimeStep, rigidBody.position.z, rigidBody.velocity.z, forceZ});
+        // timeSeries.Add(new List<float>() {currentTimeStep, rigidBody.position.x, rigidBody.velocity.x, constantForce});
+        if(rigidBody.velocity.x < 2) {
+            Debug.Log(rigidBody.velocity.x);
+        }
+        // Debug.Log(rigidBody.velocity.x);
     }
 
     void OnApplicationQuit() {
