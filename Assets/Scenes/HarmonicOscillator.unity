@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657815, g: 0.49641192, b: 0.57481617, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -355,14 +355,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.17364156, y: -0.0015153508, z: 0.008593982, w: 0.98477036}
-  m_LocalPosition: {x: 0.11, y: 2.11, z: -4.97}
+  m_LocalRotation: {x: 0.00450498, y: 0.0016991466, z: 0.00086377567, w: 0.9999881}
+  m_LocalPosition: {x: -0.93, y: 1.11, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 20, y: 0, z: 1}
+  m_LocalEulerAnglesHint: {x: 0.516, y: 0.195, z: 0.1}
 --- !u!1 &1101248651
 GameObject:
   m_ObjectHideFlags: 0
@@ -495,8 +495,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubeRigidBody: {fileID: 0}
   cubeRigidBody2: {fileID: 0}
-  springK: 0
-  pushForce: 0
+  wallRigidBody: {fileID: 0}
+  accelerationForce: 0
+  velocityThreshold: 2
+  springConstant: 0
+  compressedLength: 0
 --- !u!65 &1190837191
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -626,7 +629,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!114 &1233240348
 MonoBehaviour:
@@ -642,8 +645,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubeRigidBody: {fileID: 0}
   cubeRigidBody2: {fileID: 0}
-  springK: 0
-  pushForce: 0
+  wallRigidBody: {fileID: 0}
+  accelerationForce: 0
+  velocityThreshold: 2
+  springConstant: 0
+  compressedLength: 0
 --- !u!65 &1233240349
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -851,8 +857,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubeRigidBody: {fileID: 0}
   cubeRigidBody2: {fileID: 0}
-  springK: 0
-  pushForce: 2
+  wallRigidBody: {fileID: 0}
+  accelerationForce: 2
+  velocityThreshold: 2
+  springConstant: 2
+  compressedLength: 1.5
 --- !u!1 &1613095875
 GameObject:
   m_ObjectHideFlags: 0

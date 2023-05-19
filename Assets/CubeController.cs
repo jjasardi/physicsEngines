@@ -13,64 +13,68 @@ using System;
     Author: jasarard, funhotho, unveryoh
     Version: 1.0
 */
+
 public class CubeController : MonoBehaviour
 {
     public Rigidbody cubeRigidBody;
-
     public Rigidbody cubeRigidBody2;
+    public Rigidbody wallRigidBody;
 
-    public float springK;   // N/m
-    private float forceX;   // N
-    private float startPos; // x-position
-
-    private float currentTimeStep; // s
-
-    private List<List<float>> timeSeries;
-
-    public int pushForce; // N/m
     private bool accel = true;
+    private bool hasCollided = false;
+    private bool isStuck = false;
+
+    public float accelerationForce; // N
+    public float velocityThreshold; // m/s
+
+    public float springConstant; // N/m
+    public float compressedLength; // m
+    private float springForce;
+
+    private float initialPosition;
+    private float currentTimeStep;
+    private List<List<float>> timeSeries;
 
     // Start is called before the first frame update
     void Start()
     {
         cubeRigidBody = GetComponent<Rigidbody>();
+        cubeRigidBody2 = GameObject.Find("Cube2").GetComponent<Rigidbody>();
+        wallRigidBody = GameObject.Find("Wall").GetComponent<Rigidbody>();
+        initialPosition = cubeRigidBody.position.x;
         timeSeries = new List<List<float>>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    // FixedUpdate can be called multiple times per frame
+    // FixedUpdate is called once per fixed frame
     void FixedUpdate()
     {
-        if (Math.Abs(cubeRigidBody.velocity.x) > 2 && accel)
-        {
-            accel = false;
-            pushForce = 0;
-            cubeRigidBody.AddForce(new Vector3(cubeRigidBody.velocity.x * -1, 0f, 0f));
-        }
-
         if (accel)
         {
-            cubeRigidBody.AddForce(new Vector3(pushForce, 0f, 0f), ForceMode.Force);
-        }
+            cubeRigidBody.AddForce(new Vector3(accelerationForce, 0f, 0f), ForceMode.Force);
 
+            if (Mathf.Abs(cubeRigidBody.velocity.x) >= velocityThreshold)
+            {
+                accel = false;
+                cubeRigidBody.velocity = new Vector3(velocityThreshold, 0f, 0f);
+            }
+        }
         float cubePosX = cubeRigidBody.position.x + cubeRigidBody.transform.localScale.x / 2;
         float deltaX = 0f;
 
-        if (cubePosX > startPos)
+        // If the cube has collided with the wall, apply a spring force
+        if (hasCollided && !isStuck)
         {
-            deltaX = cubePosX - startPos;
-            forceX = -deltaX * springK;
-            cubeRigidBody.AddForce(new Vector3(forceX, 0f, 0f));
+            // Calculate the spring force
+            deltaX = cubePosX - initialPosition;
+            springForce = -springConstant * compressedLength;
+
+            // Apply the spring force
+            cubeRigidBody.AddForce(new Vector3(springForce, 0f, 0f), ForceMode.Force);
         }
 
         currentTimeStep += Time.deltaTime;
-        timeSeries.Add(new List<float>() { currentTimeStep, cubeRigidBody.position.x, cubeRigidBody.velocity.x, pushForce });
-        timeSeries.Add(new List<float>() { currentTimeStep, deltaX, forceX, cubeRigidBody.velocity.x });
+        timeSeries.Add(new List<float>() { currentTimeStep, cubeRigidBody.position.x, cubeRigidBody.velocity.x, springConstant});
+        timeSeries.Add(new List<float>() { currentTimeStep, deltaX, springForce, cubeRigidBody.velocity.x });
         timeSeries.Add(new List<float>() { currentTimeStep, cubeRigidBody2.position.x, cubeRigidBody2.velocity.x });
     }
 
@@ -93,15 +97,32 @@ public class CubeController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.rigidbody != cubeRigidBody) return;
+        if (collision.gameObject.name == "Wall")
+        {
+            Debug.Log("Collision detected with Wall");
+            hasCollided = true;
 
-        FixedJoint joint = gameObject.AddComponent<FixedJoint>();
+            FixedJoint joint = cubeRigidBody2.gameObject.AddComponent<FixedJoint>();
 
-        ContactPoint contact = collision.contacts[0];
-        joint.anchor = transform.InverseTransformPoint(contact.point);
-        joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();
+            ContactPoint contact = collision.contacts[0];
+            joint.anchor = cubeRigidBody2.transform.InverseTransformPoint(contact.point);
+            joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();
 
-        // Stops objects from continuing to collide and creating more joints
-        joint.enableCollision = false;
+            // Stops objects from continuing to collide and creating more joints
+            joint.enableCollision = true;
+        }
+
+        if (collision.gameObject.name == "Cube2")
+        {
+            Debug.Log("Collision detected with Cube2");
+            isStuck = true;
+            accelerationForce = 0f;
+
+            FixedJoint joint = cubeRigidBody.gameObject.AddComponent<FixedJoint>();
+
+            ContactPoint contact = collision.contacts[0];
+            joint.anchor = cubeRigidBody2.transform.InverseTransformPoint(contact.point);
+            joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();  
+        }
     }
 }
