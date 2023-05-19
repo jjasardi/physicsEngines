@@ -21,7 +21,6 @@ public class CubeController : MonoBehaviour
     public Rigidbody wallRigidBody;
 
     private bool accel = true;
-    private bool hasCollided = false;
     private bool isStuck = false;
 
     public float accelerationForce; // N
@@ -50,7 +49,7 @@ public class CubeController : MonoBehaviour
     {
         if (accel)
         {
-            cubeRigidBody.AddForce(new Vector3(accelerationForce, 0f, 0f), ForceMode.Force);
+            cubeRigidBody.AddForce(new Vector3(accelerationForce, 0f, 0f));
 
             if (Mathf.Abs(cubeRigidBody.velocity.x) >= velocityThreshold)
             {
@@ -60,16 +59,18 @@ public class CubeController : MonoBehaviour
         }
         float cubePosX = cubeRigidBody.position.x + cubeRigidBody.transform.localScale.x / 2;
         float deltaX = 0f;
+        float springLocation = wallRigidBody.position.x - compressedLength;
 
         // If the cube has collided with the wall, apply a spring force
-        if (hasCollided && !isStuck)
+        if (cubeRigidBody.position.x >= springLocation && !isStuck)
         {
             // Calculate the spring force
+            accel = false;
             deltaX = cubePosX - initialPosition;
-            springForce = -springConstant * compressedLength;
+            springForce = -springConstant * cubeRigidBody.position.x;
 
             // Apply the spring force
-            cubeRigidBody.AddForce(new Vector3(springForce, 0f, 0f), ForceMode.Force);
+            cubeRigidBody.AddForce(new Vector3(springForce, 0f, 0f));
         }
 
         currentTimeStep += Time.deltaTime;
@@ -97,21 +98,6 @@ public class CubeController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.name == "Wall")
-        {
-            Debug.Log("Collision detected with Wall");
-            hasCollided = true;
-
-            FixedJoint joint = cubeRigidBody2.gameObject.AddComponent<FixedJoint>();
-
-            ContactPoint contact = collision.contacts[0];
-            joint.anchor = cubeRigidBody2.transform.InverseTransformPoint(contact.point);
-            joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();
-
-            // Stops objects from continuing to collide and creating more joints
-            joint.enableCollision = true;
-        }
-
         if (collision.gameObject.name == "Cube2")
         {
             Debug.Log("Collision detected with Cube2");
