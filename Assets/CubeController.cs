@@ -30,6 +30,15 @@ public class CubeController : MonoBehaviour
     public float compressedLength; // m
     private float springForce;
 
+    private float dampingConstant;
+    private Vector3 anchorPoint;
+    private Boolean craneCableActiv = false;
+    private Vector3 differenceVector;
+    private float alpha;
+    private float gravityAccelaration = 9.81f;
+    private float ropeLength = 6.0f; //Seillänge
+    private float startTime;
+
     private float initialPosition;
     private float currentTimeStep;
     private List<List<float>> timeSeries;
@@ -47,6 +56,10 @@ public class CubeController : MonoBehaviour
     // FixedUpdate is called once per fixed frame
     void FixedUpdate()
     {
+        float cubePosX = cubeRigidBody.position.x + cubeRigidBody.transform.localScale.x / 2;
+        float deltaX = 0f;
+        float springLocation = wallRigidBody.position.x - compressedLength;
+
         if (accel)
         {
             cubeRigidBody.AddForce(new Vector3(accelerationForce, 0f, 0f));
@@ -57,12 +70,9 @@ public class CubeController : MonoBehaviour
                 cubeRigidBody.velocity = new Vector3(velocityThreshold, 0f, 0f);
             }
         }
-        float cubePosX = cubeRigidBody.position.x + cubeRigidBody.transform.localScale.x / 2;
-        float deltaX = 0f;
-        float springLocation = wallRigidBody.position.x - compressedLength;
 
-        // If the cube has collided with the wall, apply a spring force
-        if (cubeRigidBody.position.x >= springLocation && !isStuck)
+        // Before cube 1 has collided with the wall, apply a spring force
+        if (cubeRigidBody.position.x >= springLocation && !isStuck && !craneCableActiv)
         {
             // Calculate the spring force
             accel = false;
@@ -72,6 +82,63 @@ public class CubeController : MonoBehaviour
             // Apply the spring force
             cubeRigidBody.AddForce(new Vector3(springForce, 0f, 0f));
         }
+
+        if (cubeRigidBody.position.x <= -10 && !craneCableActiv)  //+ boolean damit nur 1 anchorpoint gesetzt wird
+        {
+
+            // anchorPoint = x pos, z pos gleich wie cube, y pos + 6.0f
+            //boolean aktiv = true;
+            anchorPoint = new Vector3(cubeRigidBody.position.x, (cubeRigidBody.position.y + ropeLength), cubeRigidBody.position.z);
+            craneCableActiv = true;
+            startTime = currentTimeStep;
+        }
+
+        // if (seilkraft aktiv) bool von oben {
+        // alpha berechnen
+        // differenceVector = anchor - rigidCube1.position
+        // alpha = Mathf.Atan2(differenceVector.x, differenceVector.y)
+        // }
+
+        if (craneCableActiv)
+        {
+            differenceVector = anchorPoint - cubeRigidBody.position;
+            //alpha = Mathf.Atan2(differenceVector.y, differenceVector.x);
+            alpha = Mathf.Atan(differenceVector.y / differenceVector.x);
+
+            //gewichtskraft berechnen //radialer anteil Formel
+            //Mathf.abs()
+            float gravitationalForce = Mathf.Abs(cubeRigidBody.mass * gravityAccelaration * Mathf.Cos(alpha));
+
+            //zentripetal formel
+            // mathf.abs(mass * mathf.pow(cube1.velocity.magnitude, 2)/R)...  R = seillänge 6meter
+            float centripetalForce = Mathf.Abs(cubeRigidBody.mass * Mathf.Pow(cubeRigidBody.velocity.magnitude, 2) / ropeLength);
+
+            //komponenten
+            //Fhori
+            //FVert
+            float fHori = (gravitationalForce + centripetalForce) * Mathf.Sin(alpha);
+            float fVert = (gravitationalForce + centripetalForce) * Mathf.Cos(alpha);
+
+            //Friction:
+            Vector3 unitVelocityX = cubeRigidBody.velocity / Mathf.Abs(cubeRigidBody.velocity.x);
+            Vector3 unitVelocityY = cubeRigidBody.velocity / Mathf.Abs(cubeRigidBody.velocity.y);
+            float SurfaceX = 2.25f;
+            float SurfaceY = SurfaceX;
+            float frictionForceX = -0.5f * SurfaceX * 1.2f * 1.1f * Mathf.Pow(Mathf.Abs(cubeRigidBody.velocity.x), 2) * unitVelocityX.x;
+            float frictionForceY = -0.5f * SurfaceY * 1.2f * 1.1f * Mathf.Pow(Mathf.Abs(cubeRigidBody.velocity.y), 2) * unitVelocityY.y;
+            Vector3 frictionForce = new Vector3(frictionForceX, frictionForceY, 0f);
+            cubeRigidBody.AddForce(frictionForce);
+            cubeRigidBody2.AddForce(frictionForce);
+
+            Debug.Log($"fHori{fHori},\t fVerti:{fVert}, \t alpha:{alpha}, \t startTime:{currentTimeStep - startTime}");
+
+            //cube1.addforce
+            //cube2.addForce(Fhori,FVert,)
+            cubeRigidBody.AddForce(new Vector3(fHori, fVert, 0f));
+            cubeRigidBody2.AddForce(new Vector3(fHori, fVert, 0f));
+        }
+
+
 
         currentTimeStep += Time.deltaTime;
         timeSeries.Add(new List<float>() { currentTimeStep, cubeRigidBody.position.x, cubeRigidBody.velocity.x, springConstant});
@@ -108,7 +175,13 @@ public class CubeController : MonoBehaviour
 
             ContactPoint contact = collision.contacts[0];
             joint.anchor = cubeRigidBody2.transform.InverseTransformPoint(contact.point);
-            joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();  
+            joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();
+
+            //// Setze die Verankerungspunkte der Kranseile
+            //joint.anchor = craneCable1.InverseTransformPoint(cubeRigidBody.position);
+            //joint.connectedAnchor = craneCable2.InverseTransformPoint(cubeRigidBody2.position);
+
+
         }
     }
 }
