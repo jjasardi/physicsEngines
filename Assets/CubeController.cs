@@ -30,7 +30,6 @@ public class CubeController : MonoBehaviour
     public float compressedLength; // m
     private float springForce;
 
-    private float dampingConstant;
     private Vector3 anchorPoint;
     private Boolean craneCableActiv = false;
     private Vector3 differenceVector;
@@ -47,7 +46,8 @@ public class CubeController : MonoBehaviour
     void Start()
     {
         cubeRigidBody = GetComponent<Rigidbody>();
-        cubeRigidBody2 = GameObject.Find("Cube2").GetComponent<Rigidbody>();
+        cubeRigidBody2 = GetComponent<Rigidbody>();
+        //cubeRigidBody2 = GameObject.Find("Cube2").GetComponent<Rigidbody>();
         wallRigidBody = GameObject.Find("Wall").GetComponent<Rigidbody>();
         initialPosition = cubeRigidBody.position.x;
         timeSeries = new List<List<float>>();
@@ -163,6 +163,7 @@ public class CubeController : MonoBehaviour
         }
     }
 
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.name == "Cube2")
@@ -176,11 +177,6 @@ public class CubeController : MonoBehaviour
             ContactPoint contact = collision.contacts[0];
             joint.anchor = cubeRigidBody2.transform.InverseTransformPoint(contact.point);
             joint.connectedBody = collision.contacts[0].otherCollider.transform.GetComponent<Rigidbody>();
-
-            //// Setze die Verankerungspunkte der Kranseile
-            //joint.anchor = craneCable1.InverseTransformPoint(cubeRigidBody.position);
-            //joint.connectedAnchor = craneCable2.InverseTransformPoint(cubeRigidBody2.position);
-
 
         }
     }
